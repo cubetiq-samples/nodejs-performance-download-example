@@ -91,6 +91,11 @@ const downloadFromURLAsBuffer = async (url, cancelSource) => {
     try {
         // Make a GET request to the url
         return await axios.get(url, {
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Expires': 0,
+            },
             responseType: 'arraybuffer',
             onDownloadProgress: (progressEvent) => {
                 const { loaded, total } = progressEvent;
