@@ -23,8 +23,13 @@ app.get('/download', async (req, res) => {
 
     // Check request is cancelled
     req.on('close', () => {
-        console.log('Request cancelled by client');
-        cancelSource.cancel('Operation cancelled by client');
+        // Check if client force closed the connection
+        if (req.socket.destroyed) {
+            console.log('Request cancelled by client');
+            cancelSource.cancel('Operation cancelled by client');
+        } else {
+            console.log('Download completed')
+        }
     });
 
     const version = parseInt(req.query.v || '1');
