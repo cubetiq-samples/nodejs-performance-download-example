@@ -12,6 +12,18 @@ const { promisify } = require('util');
 // For writter stream finished event
 const streamFinished = promisify(require('stream').finished);
 
+const prettyBytes = (num) => {
+    if (isNaN(num)) {
+        return '0 Bytes';
+    }
+
+    const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
+    const n = Number((num / Math.pow(1000, exponent)).toPrecision(3));
+    const unit = units[exponent];
+    return `${n} ${unit}`;
+}
+
 // Create an instance of axios
 const axiosInstance = axios.create({
     // Set the responseType to stream
@@ -19,8 +31,11 @@ const axiosInstance = axios.create({
     onDownloadProgress: (progressEvent) => {
         const { loaded, total } = progressEvent;
         const percent = Math.floor((loaded * 100) / total);
-        console.log(`Downloaded ${loaded} of ${total} (${percent}%)`);
-    }
+        console.log(`Downloaded ${prettyBytes(loaded)} of ${prettyBytes(total)} (${percent}%)`);
+    },
+    // Disable the max redirects to prevent the axios from following the redirect
+    // And causing the download to store the cache in memory
+    maxRedirects: 0,
 });
 
 const downloadFileFromURLAsStreamV1 = async (url, outputPath, cancelSource) => {
@@ -56,8 +71,12 @@ const downloadFileFromURLAsStreamV1 = async (url, outputPath, cancelSource) => {
                 })
             });
         }).catch((err) => {
-            console.log(`Error downloading file from ${url}`, err);
+            console.log(`[V1] Error downloading file from ${url}`, err);
             throw err;
+        }).finally(() => {
+            writter.close();
+            writter.destroy();
+            console.log('[V1] File stream writter closed');
         });
 }
 
@@ -76,8 +95,12 @@ const downloadFileFromURLAsStreamV2 = async (url, outputPath, cancelSource) => {
             response.data.pipe(writter);
             return streamFinished(writter);
         }).catch((err) => {
-            console.log(`Error downloading file from ${url}`, err);
+            console.log(`[V2] Error downloading file from ${url}`, err);
             throw err;
+        }).finally(() => {
+            writter.close();
+            writter.destroy();
+            console.log('[V2] File stream writter closed');
         });
 }
 
@@ -103,6 +126,7 @@ const downloadFromURLAsBuffer = async (url, cancelSource) => {
                 console.log(`URL: ${url} | Downloaded ${loaded} of ${total} (${percent}%)`);
             },
             cancelToken: cancelSource.token,
+            maxRedirects: 0,
         }).then(response => {
             if (response.status === 200) {
                 return Buffer.from(response.data, 'binary');
