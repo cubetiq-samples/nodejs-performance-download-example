@@ -1,8 +1,8 @@
 # Nodejs Download File from URL with Performance
 
--   [x] Download Function 1 (Legacy)
--   [x] Download Function 2 (Modern)
--   [x] Download Function with Buffer (Slow/Leak memory)
+-   [x] Download Function 1 (Legacy) (v=1)
+-   [x] Download Function 2 (Modern) (v=2)
+-   [x] Download Function with Buffer (Slow/Leak memory) (v=-1)
 
 ### Usage
 
@@ -29,6 +29,12 @@ npm run start
 
 ```shell
 make
+```
+
+### Testing to API
+
+```shell
+curl http://localhost:3000/download?url=http://download.ctdn.net/test/1G.img&v=-1
 ```
 
 ### Contributors
